@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Button from './components/Button';
+import AuthContainer from './components/Auth/AuthContainer';
 import { UserProfile, ViewState, STORAGE_KEYS, ReflectionEntry, LanguageCode } from './types';
 import { generateFutureSelfLetter, generateDailyPrompt } from './services/geminiService';
 import { LANGUAGES, t, isRTL } from './utils/translations';
@@ -8,15 +9,15 @@ import { Sparkles, ArrowRight, Anchor, Heart, Shield, Sun, Cloud, Feather, BookO
 
 // --- Components ---
 
-const LanguageSelector: React.FC<{ 
-  current: LanguageCode; 
-  onSelect: (lang: LanguageCode) => void; 
+const LanguageSelector: React.FC<{
+  current: LanguageCode;
+  onSelect: (lang: LanguageCode) => void;
   isOpen: boolean;
   setIsOpen: (v: boolean) => void;
 }> = ({ current, onSelect, isOpen, setIsOpen }) => {
   return (
     <div className="relative">
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/40 hover:bg-white/60 backdrop-blur-sm transition-all text-warm-700 border border-white/40 shadow-sm"
       >
@@ -30,11 +31,10 @@ const LanguageSelector: React.FC<{
             <button
               key={lang.code}
               onClick={() => { onSelect(lang.code); setIsOpen(false); }}
-              className={`text-left px-4 py-3 rounded-xl transition-colors text-sm flex justify-between items-center ${
-                current === lang.code 
-                  ? 'bg-lavender-100 text-warm-900 font-medium' 
+              className={`text-left px-4 py-3 rounded-xl transition-colors text-sm flex justify-between items-center ${current === lang.code
+                  ? 'bg-lavender-100 text-warm-900 font-medium'
                   : 'hover:bg-warm-50 text-warm-600'
-              }`}
+                }`}
             >
               <span>{lang.nativeLabel}</span>
               <span className="text-xs text-warm-400">{lang.label}</span>
@@ -52,7 +52,7 @@ const LandingView: React.FC<{ onStart: () => void; lang: LanguageCode }> = ({ on
     {/* Hero */}
     <div className="text-center space-y-8 mt-10 mb-20 relative">
       <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-64 bg-lavender-200/20 rounded-full blur-[80px] pointer-events-none"></div>
-      
+
       <h1 className="text-4xl md:text-6xl font-serif text-warm-900 leading-tight relative z-10">
         {t(lang, 'hero_title')}<br />
         <span className="text-lavender-600 italic">{t(lang, 'hero_subtitle')}</span>
@@ -107,47 +107,7 @@ const LandingView: React.FC<{ onStart: () => void; lang: LanguageCode }> = ({ on
   </div>
 );
 
-// 2. Auth View
-const AuthView: React.FC<{ onAuth: (name: string, email: string) => void; lang: LanguageCode }> = ({ onAuth, lang }) => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 animate-fade-in" dir={isRTL(lang) ? 'rtl' : 'ltr'}>
-      <div className="w-full max-w-md bg-white/60 backdrop-blur-2xl p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 space-y-8">
-        <div className="text-center space-y-2">
-          <h2 className="text-3xl font-serif text-warm-900">{t(lang, 'auth_title')}</h2>
-          <p className="text-warm-500">{t(lang, 'auth_subtitle')}</p>
-        </div>
-        
-        <div className="space-y-6">
-          <div className="group">
-            <label className="block text-sm font-medium text-warm-500 mb-2 ml-1 transition-colors group-focus-within:text-lavender-600">{t(lang, 'input_name')}</label>
-            <input 
-              type="text" 
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full p-4 rounded-2xl bg-white/50 border border-warm-100 focus:outline-none focus:ring-2 focus:ring-lavender-200 focus:bg-white transition-all shadow-sm focus:shadow-[0_0_0_4px_rgba(233,213,255,0.2)]"
-            />
-          </div>
-          <div className="group">
-            <label className="block text-sm font-medium text-warm-500 mb-2 ml-1 transition-colors group-focus-within:text-lavender-600">{t(lang, 'input_email')}</label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-4 rounded-2xl bg-white/50 border border-warm-100 focus:outline-none focus:ring-2 focus:ring-lavender-200 focus:bg-white transition-all shadow-sm focus:shadow-[0_0_0_4px_rgba(233,213,255,0.2)]"
-            />
-          </div>
-        </div>
-
-        <Button onClick={() => onAuth(name, email)} disabled={!name || !email}>
-          {t(lang, 'cta_start')}
-        </Button>
-      </div>
-    </div>
-  );
-};
 
 // 3. Setup View
 interface SetupProps {
@@ -197,7 +157,7 @@ const SetupView: React.FC<SetupProps> = ({ onComplete, lang }) => {
             className="w-full p-6 rounded-2xl bg-white/60 border border-white/50 focus:outline-none focus:ring-2 focus:ring-peach-200 focus:bg-white text-xl leading-relaxed text-warm-800 placeholder:text-warm-300 shadow-sm resize-none transition-all duration-500 focus:shadow-[0_0_30px_-5px_rgba(255,166,124,0.2)]"
             autoFocus
           />
-           <div className="flex justify-end">
+          <div className="flex justify-end">
             <div className="w-32">
               <Button onClick={next} disabled={description.length < 5}>Next</Button>
             </div>
@@ -247,7 +207,7 @@ const LetterView: React.FC<{ letter: string; onContinue: () => void; lang: Langu
     <div className="w-full max-w-2xl relative z-10">
       <div className="bg-[#fcfbf9]/90 backdrop-blur-sm p-8 md:p-16 rounded-3xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border border-white/60 relative overflow-hidden group">
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-200/50 via-warm-200/50 to-amber-200/50 opacity-60"></div>
-        
+
         {/* Soft light leak effect inside card */}
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-amber-100/20 rounded-full blur-[60px] pointer-events-none"></div>
 
@@ -277,8 +237,8 @@ const LetterView: React.FC<{ letter: string; onContinue: () => void; lang: Langu
 );
 
 // 6. Reflection View
-const ReflectionView: React.FC<{ 
-  prompt: string; 
+const ReflectionView: React.FC<{
+  prompt: string;
   onSave: (response: string) => void;
   user: UserProfile;
   lang: LanguageCode;
@@ -308,23 +268,23 @@ const ReflectionView: React.FC<{
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 animate-fade-in max-w-xl mx-auto" dir={isRTL(lang) ? 'rtl' : 'ltr'}>
-       <div className="text-center mb-10 space-y-2 relative z-10">
-         <h2 className="text-2xl font-serif text-warm-800">{prompt}</h2>
-       </div>
+      <div className="text-center mb-10 space-y-2 relative z-10">
+        <h2 className="text-2xl font-serif text-warm-800">{prompt}</h2>
+      </div>
 
-       <textarea
-          value={response}
-          onChange={(e) => setResponse(e.target.value)}
-          placeholder="..."
-          rows={4}
-          className="w-full p-6 rounded-3xl bg-white/40 backdrop-blur-md border border-white/60 focus:outline-none focus:ring-2 focus:ring-lavender-200 text-lg text-warm-700 placeholder:text-warm-300 shadow-sm resize-none mb-8 transition-all duration-700 focus:shadow-[0_0_40px_-10px_rgba(167,139,250,0.2)] focus:bg-white/60"
-        />
+      <textarea
+        value={response}
+        onChange={(e) => setResponse(e.target.value)}
+        placeholder="..."
+        rows={4}
+        className="w-full p-6 rounded-3xl bg-white/40 backdrop-blur-md border border-white/60 focus:outline-none focus:ring-2 focus:ring-lavender-200 text-lg text-warm-700 placeholder:text-warm-300 shadow-sm resize-none mb-8 transition-all duration-700 focus:shadow-[0_0_40px_-10px_rgba(167,139,250,0.2)] focus:bg-white/60"
+      />
 
-        <div className="relative z-10">
-          <Button onClick={handleSave} disabled={!response.trim()}>
-            {t(lang, 'letter_continue')}
-          </Button>
-        </div>
+      <div className="relative z-10">
+        <Button onClick={handleSave} disabled={!response.trim()}>
+          {t(lang, 'letter_continue')}
+        </Button>
+      </div>
     </div>
   );
 };
@@ -389,13 +349,13 @@ const App: React.FC = () => {
 
   const handleSetupComplete = (desc: string, time: string, focus: string) => {
     if (!user) return;
-    const updatedUser = { 
-      ...user, 
-      futureDescription: desc, 
-      timeHorizon: time, 
+    const updatedUser = {
+      ...user,
+      futureDescription: desc,
+      timeHorizon: time,
       emotionalFocus: focus,
       language: language,
-      hasCompletedSetup: true 
+      hasCompletedSetup: true
     };
     setUser(updatedUser);
     localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(updatedUser));
@@ -409,7 +369,7 @@ const App: React.FC = () => {
         generateFutureSelfLetter(profile),
         generateDailyPrompt(profile)
       ]);
-      
+
       setLetter(genLetter);
       setPrompt(genPrompt);
       localStorage.setItem(STORAGE_KEYS.LAST_LETTER, genLetter);
@@ -424,11 +384,11 @@ const App: React.FC = () => {
 
   const saveReflection = (response: string) => {
     const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.REFLECTION_HISTORY) || '[]');
-    history.push({ 
-      id: Date.now().toString(), 
-      date: new Date().toISOString(), 
-      prompt: prompt, 
-      response 
+    history.push({
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      prompt: prompt,
+      response
     });
     localStorage.setItem(STORAGE_KEYS.REFLECTION_HISTORY, JSON.stringify(history));
   };
@@ -436,18 +396,18 @@ const App: React.FC = () => {
   // Header
   const Header = () => (
     <header className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50" dir="ltr">
-      <div 
+      <div
         className="font-serif font-bold text-warm-800 cursor-pointer flex items-center gap-2"
         onClick={() => setView('LANDING')}
       >
         <Sparkles size={18} className="text-lavender-500" />
         <span className="hidden sm:inline">Future You</span>
       </div>
-      
+
       <div className="flex items-center gap-4">
-        <LanguageSelector 
-          current={language} 
-          onSelect={changeLanguage} 
+        <LanguageSelector
+          current={language}
+          onSelect={changeLanguage}
           isOpen={isLangMenuOpen}
           setIsOpen={setIsLangMenuOpen}
         />
@@ -458,23 +418,23 @@ const App: React.FC = () => {
   return (
     <Layout>
       <Header />
-      
+
       {view === 'LANDING' && <LandingView onStart={handleStart} lang={language} />}
-      
-      {view === 'AUTH' && <AuthView onAuth={handleAuth} lang={language} />}
-      
+
+      {view === 'AUTH' && <AuthContainer onAuth={handleAuth} lang={language} />}
+
       {view === 'SETUP' && <SetupView onComplete={handleSetupComplete} lang={language} />}
-      
+
       {view === 'GENERATING' && <GeneratingView lang={language} />}
-      
+
       {view === 'LETTER' && letter && (
         <LetterView letter={letter} onContinue={() => setView('REFLECTION')} lang={language} />
       )}
-      
+
       {view === 'REFLECTION' && prompt && user && (
         <ReflectionView prompt={prompt} onSave={saveReflection} user={user} lang={language} />
       )}
-      
+
     </Layout>
   );
 };
