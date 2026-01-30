@@ -301,7 +301,7 @@ const ReflectionView: React.FC<{
 // --- Main App Logic ---
 
 const App: React.FC = () => {
-  const { user, userProfile, loading } = useAuth();
+  const { user, userProfile, loading, logout } = useAuth();
   const [letter, setLetter] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<string | null>(null);
   const [language, setLanguage] = useState<LanguageCode>('en');
@@ -405,13 +405,48 @@ const App: React.FC = () => {
         <span className="hidden sm:inline">Future You</span>
       </div>
 
-      <div className="flex items-center gap-4 pointer-events-auto">
+      <div className="flex items-center gap-3 pointer-events-auto">
         <LanguageSelector
           current={language}
           onSelect={changeLanguage}
           isOpen={isLangMenuOpen}
           setIsOpen={setIsLangMenuOpen}
         />
+
+        {/* Auth Navigation */}
+        {!loading && (
+          user ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-warm-600 hidden sm:inline">
+                {userProfile?.name || user.email}
+              </span>
+              <button
+                onClick={async () => {
+                  await logout();
+                  navigate('/');
+                }}
+                className="px-4 py-2 text-sm font-medium text-warm-600 hover:text-warm-800 bg-white/40 hover:bg-white/60 rounded-full backdrop-blur-sm transition-all border border-white/40"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate('/login')}
+                className="px-4 py-2 text-sm font-medium text-warm-600 hover:text-warm-800 bg-white/40 hover:bg-white/60 rounded-full backdrop-blur-sm transition-all border border-white/40"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => navigate('/signup')}
+                className="px-4 py-2 text-sm font-medium text-white bg-lavender-500 hover:bg-lavender-600 rounded-full transition-all shadow-sm"
+              >
+                Sign Up
+              </button>
+            </div>
+          )
+        )}
       </div>
     </header>
   );
