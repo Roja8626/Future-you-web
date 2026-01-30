@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import './index.css';
+import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import Button from './components/Button';
-import AuthContainer from './components/Auth/AuthContainer';
-import { UserProfile, ViewState, STORAGE_KEYS, ReflectionEntry, LanguageCode } from './types';
+import LoginForm from './components/Auth/LoginForm';
+import SignupForm from './components/Auth/SignupForm';
+import ProtectedRoute from './components/ProtectedRoute';
+import { ViewState, STORAGE_KEYS, ReflectionEntry, LanguageCode } from './types';
 import { generateFutureSelfLetter, generateDailyPrompt } from './services/geminiService';
 import { LANGUAGES, t, isRTL } from './utils/translations';
-import { Sparkles, ArrowRight, Anchor, Heart, Shield, Sun, Cloud, Feather, BookOpen, User, HelpCircle, Globe } from 'lucide-react';
+import { Sparkles, Heart, Shield, Sun, Cloud, Feather, Globe } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from './services/firebase';
 
 // --- Components ---
 
@@ -32,8 +39,8 @@ const LanguageSelector: React.FC<{
               key={lang.code}
               onClick={() => { onSelect(lang.code); setIsOpen(false); }}
               className={`text-left px-4 py-3 rounded-xl transition-colors text-sm flex justify-between items-center ${current === lang.code
-                  ? 'bg-lavender-100 text-warm-900 font-medium'
-                  : 'hover:bg-warm-50 text-warm-600'
+                ? 'bg-lavender-100 text-warm-900 font-medium'
+                : 'hover:bg-warm-50 text-warm-600'
                 }`}
             >
               <span>{lang.nativeLabel}</span>
@@ -106,8 +113,6 @@ const LandingView: React.FC<{ onStart: () => void; lang: LanguageCode }> = ({ on
     </footer>
   </div>
 );
-
-
 
 // 3. Setup View
 interface SetupProps {
@@ -190,16 +195,21 @@ const SetupView: React.FC<SetupProps> = ({ onComplete, lang }) => {
 };
 
 // 4. Generating View
-const GeneratingView: React.FC<{ lang: LanguageCode }> = ({ lang }) => (
-  <div className="flex flex-col items-center justify-center min-h-screen p-6 animate-fade-in text-center" dir={isRTL(lang) ? 'rtl' : 'ltr'}>
-    <div className="mb-8 relative">
-      <div className="w-40 h-40 bg-lavender-200/30 rounded-full animate-scale-pulse blur-2xl absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-      <Sparkles className="w-12 h-12 text-warm-400 relative z-10 animate-spin-slow opacity-80" strokeWidth={1} />
+const GeneratingView: React.FC<{ lang: LanguageCode; onComplete: () => void }> = ({ lang, onComplete }) => {
+  // Simulate generation or wait for parent logic? 
+  // Parent component 'App' handles the logic in useEffect usually?
+  // Here we just show the view. 
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen p-6 animate-fade-in text-center" dir={isRTL(lang) ? 'rtl' : 'ltr'}>
+      <div className="mb-8 relative">
+        <div className="w-40 h-40 bg-lavender-200/30 rounded-full animate-scale-pulse blur-2xl absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+        <Sparkles className="w-12 h-12 text-warm-400 relative z-10 animate-spin-slow opacity-80" strokeWidth={1} />
+      </div>
+      <h2 className="text-2xl font-serif text-warm-800 mb-2">{t(lang, 'generating_title')}</h2>
+      <p className="text-warm-500 animate-pulse-slow">{t(lang, 'generating_subtitle')}</p>
     </div>
-    <h2 className="text-2xl font-serif text-warm-800 mb-2">{t(lang, 'generating_title')}</h2>
-    <p className="text-warm-500 animate-pulse-slow">{t(lang, 'generating_subtitle')}</p>
-  </div>
-);
+  );
+};
 
 // 5. Letter View
 const LetterView: React.FC<{ letter: string; onContinue: () => void; lang: LanguageCode }> = ({ letter, onContinue, lang }) => (
@@ -240,9 +250,8 @@ const LetterView: React.FC<{ letter: string; onContinue: () => void; lang: Langu
 const ReflectionView: React.FC<{
   prompt: string;
   onSave: (response: string) => void;
-  user: UserProfile;
   lang: LanguageCode;
-}> = ({ prompt, onSave, user, lang }) => {
+}> = ({ prompt, onSave, lang }) => {
   const [response, setResponse] = useState('');
   const [isSaved, setIsSaved] = useState(false);
 
@@ -292,78 +301,70 @@ const ReflectionView: React.FC<{
 // --- Main App Logic ---
 
 const App: React.FC = () => {
-  const [view, setView] = useState<ViewState>('LANDING');
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const { user, userProfile, loading } = useAuth();
   const [letter, setLetter] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<string | null>(null);
   const [language, setLanguage] = useState<LanguageCode>('en');
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Load state on mount
   useEffect(() => {
     const savedLang = localStorage.getItem(STORAGE_KEYS.LANGUAGE_PREF) as LanguageCode;
     if (savedLang) setLanguage(savedLang);
 
-    const savedProfile = localStorage.getItem(STORAGE_KEYS.USER_PROFILE);
-    if (savedProfile) {
-      const parsedUser = JSON.parse(savedProfile);
-      setUser(parsedUser);
-      // Ensure UI matches user's saved language preference if logged in
-      if (parsedUser.language) {
-        setLanguage(parsedUser.language);
-      }
-    }
+    // Load last letter from storage
+    const savedLetter = localStorage.getItem(STORAGE_KEYS.LAST_LETTER);
+    if (savedLetter) setLetter(savedLetter);
   }, []);
+
+  // Sync user language
+  useEffect(() => {
+    if (userProfile?.language) {
+      setLanguage(userProfile.language);
+    }
+  }, [userProfile]);
 
   const changeLanguage = (lang: LanguageCode) => {
     setLanguage(lang);
     localStorage.setItem(STORAGE_KEYS.LANGUAGE_PREF, lang);
-    if (user) {
-      const updated = { ...user, language: lang };
-      setUser(updated);
-      localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(updated));
-    }
   };
 
   const handleStart = () => {
-    if (user && user.hasCompletedSetup) {
-      generateContent(user);
+    if (user) {
+      if (!userProfile?.hasCompletedSetup) {
+        navigate('/setup');
+      } else {
+        navigate('/letter');
+      }
     } else {
-      setView('AUTH');
+      navigate('/login');
     }
   };
 
-  const handleAuth = (name: string, email: string) => {
-    const newUser: UserProfile = {
-      name,
-      email,
-      futureDescription: '',
-      timeHorizon: '',
-      emotionalFocus: '',
-      language: language,
-      hasCompletedSetup: false
-    };
-    setUser(newUser);
-    setView('SETUP');
-  };
-
-  const handleSetupComplete = (desc: string, time: string, focus: string) => {
+  const handleSetupComplete = async (desc: string, time: string, focus: string) => {
     if (!user) return;
-    const updatedUser = {
-      ...user,
-      futureDescription: desc,
-      timeHorizon: time,
-      emotionalFocus: focus,
-      language: language,
-      hasCompletedSetup: true
-    };
-    setUser(updatedUser);
-    localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(updatedUser));
-    generateContent(updatedUser);
+
+    // Update firestore
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        futureDescription: desc,
+        timeHorizon: time,
+        emotionalFocus: focus,
+        hasCompletedSetup: true,
+        language: language // Sync language preference
+      });
+
+      generateContent({ ...userProfile!, futureDescription: desc, timeHorizon: time, emotionalFocus: focus, language } as any);
+      // Note: we might not have immediate profile update in context, so we pass constructed object
+    } catch (e) {
+      console.error("Error updating profile", e);
+    }
   };
 
-  const generateContent = async (profile: UserProfile) => {
-    setView('GENERATING');
+  const generateContent = async (profile: any) => {
+    navigate('/generating');
     try {
       const [genLetter, genPrompt] = await Promise.all([
         generateFutureSelfLetter(profile),
@@ -373,12 +374,12 @@ const App: React.FC = () => {
       setLetter(genLetter);
       setPrompt(genPrompt);
       localStorage.setItem(STORAGE_KEYS.LAST_LETTER, genLetter);
-      setView('LETTER');
+      navigate('/letter');
     } catch (e) {
       console.error(e);
       setLetter(language === 'ta' ? "நான் இங்கே இருக்கிறேன்." : "I am here.");
       setPrompt(language === 'ta' ? "உங்களை நீங்களே எப்படி கவனித்துக் கொள்வீர்கள்?" : "How can you be kind to yourself?");
-      setView('LETTER');
+      navigate('/letter');
     }
   };
 
@@ -395,16 +396,16 @@ const App: React.FC = () => {
 
   // Header
   const Header = () => (
-    <header className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50" dir="ltr">
+    <header className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50 pointer-events-none" dir="ltr">
       <div
-        className="font-serif font-bold text-warm-800 cursor-pointer flex items-center gap-2"
-        onClick={() => setView('LANDING')}
+        className="font-serif font-bold text-warm-800 cursor-pointer flex items-center gap-2 pointer-events-auto"
+        onClick={() => navigate('/')}
       >
         <Sparkles size={18} className="text-lavender-500" />
         <span className="hidden sm:inline">Future You</span>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 pointer-events-auto">
         <LanguageSelector
           current={language}
           onSelect={changeLanguage}
@@ -418,23 +419,44 @@ const App: React.FC = () => {
   return (
     <Layout>
       <Header />
+      <Routes>
+        <Route path="/" element={<LandingView onStart={handleStart} lang={language} />} />
 
-      {view === 'LANDING' && <LandingView onStart={handleStart} lang={language} />}
+        <Route path="/login" element={<LoginForm lang={language} />} />
+        <Route path="/signup" element={<SignupForm lang={language} />} />
 
-      {view === 'AUTH' && <AuthContainer onAuth={handleAuth} lang={language} />}
+        <Route path="/setup" element={
+          <ProtectedRoute>
+            <SetupView onComplete={handleSetupComplete} lang={language} />
+          </ProtectedRoute>
+        } />
 
-      {view === 'SETUP' && <SetupView onComplete={handleSetupComplete} lang={language} />}
+        <Route path="/generating" element={
+          <ProtectedRoute>
+            <GeneratingView lang={language} onComplete={() => navigate('/letter')} />
+          </ProtectedRoute>
+        } />
 
-      {view === 'GENERATING' && <GeneratingView lang={language} />}
+        <Route path="/letter" element={
+          <ProtectedRoute>
+            {letter ? (
+              <LetterView letter={letter} onContinue={() => navigate('/reflection')} lang={language} />
+            ) : (
+              <Navigate to="/" replace />
+            )}
+          </ProtectedRoute>
+        } />
 
-      {view === 'LETTER' && letter && (
-        <LetterView letter={letter} onContinue={() => setView('REFLECTION')} lang={language} />
-      )}
-
-      {view === 'REFLECTION' && prompt && user && (
-        <ReflectionView prompt={prompt} onSave={saveReflection} user={user} lang={language} />
-      )}
-
+        <Route path="/reflection" element={
+          <ProtectedRoute>
+            {prompt && userProfile ? (
+              <ReflectionView prompt={prompt} onSave={saveReflection} user={userProfile} lang={language} />
+            ) : (
+              <Navigate to="/" replace />
+            )}
+          </ProtectedRoute>
+        } />
+      </Routes>
     </Layout>
   );
 };
