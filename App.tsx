@@ -249,11 +249,13 @@ const LetterView: React.FC<{ letter: string; onContinue: () => void; lang: Langu
 // 6. Reflection View
 const ReflectionView: React.FC<{
   prompt: string;
+  letter: string;
   onSave: (response: string) => void;
   lang: LanguageCode;
-}> = ({ prompt, onSave, lang }) => {
+}> = ({ prompt, letter, onSave, lang }) => {
   const [response, setResponse] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+  const [showLetter, setShowLetter] = useState(true);
 
   const handleSave = () => {
     onSave(response);
@@ -276,23 +278,50 @@ const ReflectionView: React.FC<{
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 animate-fade-in max-w-xl mx-auto" dir={isRTL(lang) ? 'rtl' : 'ltr'}>
-      <div className="text-center mb-10 space-y-2 relative z-10">
-        <h2 className="text-2xl font-serif text-warm-800">{prompt}</h2>
+    <div className="flex flex-col items-center min-h-screen p-6 pt-24 animate-fade-in max-w-2xl mx-auto" dir={isRTL(lang) ? 'rtl' : 'ltr'}>
+
+      {/* Future You Letter Section */}
+      <div className="w-full mb-8">
+        <button
+          onClick={() => setShowLetter(!showLetter)}
+          className="flex items-center gap-2 text-warm-500 hover:text-warm-700 transition-colors mb-4 text-sm font-medium"
+        >
+          <Feather size={16} />
+          <span>{showLetter ? 'Hide' : 'Show'} letter from Future You</span>
+        </button>
+
+        {showLetter && (
+          <div className="bg-[#fcfbf9]/80 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-white/60 mb-6 animate-fade-in">
+            <div className="mb-4 flex items-center gap-2 text-warm-400">
+              <Feather size={14} />
+              <span className="text-xs font-semibold tracking-[0.15em] uppercase">{t(lang, 'letter_from')}</span>
+            </div>
+            <div className="prose prose-warm text-warm-700 font-serif leading-relaxed text-sm">
+              <p className="whitespace-pre-line">{letter}</p>
+            </div>
+          </div>
+        )}
       </div>
 
-      <textarea
-        value={response}
-        onChange={(e) => setResponse(e.target.value)}
-        placeholder="..."
-        rows={4}
-        className="w-full p-6 rounded-3xl bg-white/40 backdrop-blur-md border border-white/60 focus:outline-none focus:ring-2 focus:ring-lavender-200 text-lg text-warm-700 placeholder:text-warm-300 shadow-sm resize-none mb-8 transition-all duration-700 focus:shadow-[0_0_40px_-10px_rgba(167,139,250,0.2)] focus:bg-white/60"
-      />
+      {/* Reflection Prompt */}
+      <div className="w-full">
+        <div className="text-center mb-6 space-y-2 relative z-10">
+          <h2 className="text-2xl font-serif text-warm-800">{prompt}</h2>
+        </div>
 
-      <div className="relative z-10">
-        <Button onClick={handleSave} disabled={!response.trim()}>
-          {t(lang, 'letter_continue')}
-        </Button>
+        <textarea
+          value={response}
+          onChange={(e) => setResponse(e.target.value)}
+          placeholder="..."
+          rows={4}
+          className="w-full p-6 rounded-3xl bg-white/40 backdrop-blur-md border border-white/60 focus:outline-none focus:ring-2 focus:ring-lavender-200 text-lg text-warm-700 placeholder:text-warm-300 shadow-sm resize-none mb-8 transition-all duration-700 focus:shadow-[0_0_40px_-10px_rgba(167,139,250,0.2)] focus:bg-white/60"
+        />
+
+        <div className="relative z-10 flex justify-center">
+          <Button onClick={handleSave} disabled={!response.trim()}>
+            {t(lang, 'letter_continue')}
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -484,8 +513,8 @@ const App: React.FC = () => {
 
         <Route path="/reflection" element={
           <ProtectedRoute>
-            {prompt && userProfile ? (
-              <ReflectionView prompt={prompt} onSave={saveReflection} user={userProfile} lang={language} />
+            {prompt && letter && userProfile ? (
+              <ReflectionView prompt={prompt} letter={letter} onSave={saveReflection} lang={language} />
             ) : (
               <Navigate to="/" replace />
             )}
