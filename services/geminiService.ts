@@ -2,7 +2,8 @@ import { GoogleGenAI } from "@google/genai";
 import { UserProfile, LanguageCode } from "../types";
 
 // Initialize Gemini Client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const API_KEY = "AIzaSyBOmjmIgnH03ryDfOosUfFo9rg4jK9ViIk";
+const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 const getLanguageInstruction = (lang: LanguageCode): string => {
   switch (lang) {
