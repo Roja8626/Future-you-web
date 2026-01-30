@@ -121,32 +121,13 @@ interface SetupProps {
 }
 const SetupView: React.FC<SetupProps> = ({ onComplete, lang }) => {
   const [step, setStep] = useState(1);
-  const [timeHorizon, setTimeHorizon] = useState('');
   const [description, setDescription] = useState('');
 
   const next = () => setStep(s => s + 1);
   const dir = isRTL(lang) ? 'rtl' : 'ltr';
 
+  // Step 1: Description
   if (step === 1) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-6 animate-fade-in max-w-2xl mx-auto text-center" dir={dir}>
-        <h2 className="text-3xl font-serif text-warm-900 mb-12">{t(lang, 'setup_time_title')}</h2>
-        <div className="grid grid-cols-1 gap-4 w-full max-w-md">
-          {['6 months', '1 year', '5 years'].map((opt) => (
-            <button
-              key={opt}
-              onClick={() => { setTimeHorizon(opt); next(); }}
-              className="p-6 rounded-2xl bg-white/40 hover:bg-white/80 border border-white/50 shadow-sm hover:shadow-lg transition-all duration-300 text-lg text-warm-700 font-medium transform hover:-translate-y-1"
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 2) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 animate-fade-in max-w-2xl mx-auto" dir={dir}>
         <div className="w-full max-w-lg space-y-8">
@@ -172,7 +153,8 @@ const SetupView: React.FC<SetupProps> = ({ onComplete, lang }) => {
     );
   }
 
-  if (step === 3) {
+  // Step 2: Emotional Focus
+  if (step === 2) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 animate-fade-in max-w-2xl mx-auto text-center" dir={dir}>
         <h2 className="text-3xl font-serif text-warm-900 mb-12">{t(lang, 'setup_focus_title')}</h2>
@@ -180,7 +162,7 @@ const SetupView: React.FC<SetupProps> = ({ onComplete, lang }) => {
           {['Reassurance', 'Courage', 'Perspective', 'Calm', 'Strength'].map((opt) => (
             <button
               key={opt}
-              onClick={() => onComplete(description, timeHorizon, opt)}
+              onClick={() => onComplete(description, '1 year', opt)}
               className="px-8 py-4 rounded-full bg-white/40 hover:bg-white/80 border border-white/50 shadow-sm hover:shadow-lg hover:scale-105 transition-all duration-300 text-lg text-warm-700"
             >
               {opt}
