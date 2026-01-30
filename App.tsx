@@ -6,8 +6,8 @@ import Button from './components/Button';
 import LoginForm from './components/Auth/LoginForm';
 import SignupForm from './components/Auth/SignupForm';
 import ProtectedRoute from './components/ProtectedRoute';
-import { ViewState, STORAGE_KEYS, ReflectionEntry, LanguageCode } from './types';
-import { generateFutureSelfLetter, generateDailyPrompt } from './services/geminiService';
+import { ViewState, STORAGE_KEYS, ReflectionEntry, LanguageCode, UserProfile } from './types';
+import { generateFutureSelfLetter, generateDailyPrompt, generateResponseLetter } from './services/geminiService';
 import { LANGUAGES, t, isRTL } from './utils/translations';
 import { Sparkles, Heart, Shield, Sun, Cloud, Feather, Globe } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
@@ -232,29 +232,76 @@ const LetterView: React.FC<{ letter: string; onContinue: () => void; lang: Langu
 const ReflectionView: React.FC<{
   prompt: string;
   letter: string;
+  userProfile: UserProfile;
   onSave: (response: string) => void;
   lang: LanguageCode;
-}> = ({ prompt, letter, onSave, lang }) => {
+}> = ({ prompt, letter, userProfile, onSave, lang }) => {
   const [response, setResponse] = useState('');
   const [isSaved, setIsSaved] = useState(false);
   const [showLetter, setShowLetter] = useState(true);
+  const [responseLetter, setResponseLetter] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     onSave(response);
+    setIsGenerating(true);
+
+    try {
+      const generatedResponse = await generateResponseLetter(userProfile, response, prompt);
+      setResponseLetter(generatedResponse);
+    } catch (error) {
+      console.error('Error generating response:', error);
+      setResponseLetter(`Dear ${userProfile.name},\n\nThank you for showing up today. What you shared matters, and the fact that you're reflecting shows incredible strength.\n\nKeep going. I believe in you.`);
+    }
+
+    setIsGenerating(false);
     setIsSaved(true);
   };
 
-  if (isSaved) {
+  // Generating response state
+  if (isGenerating) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 animate-fade-in text-center" dir={isRTL(lang) ? 'rtl' : 'ltr'}>
-        <div className="p-8 bg-white/40 rounded-full text-green-600 mb-8 shadow-sm backdrop-blur-sm relative">
-          <div className="absolute inset-0 bg-green-100/30 rounded-full animate-ripple rounded-full"></div>
-          <Heart size={40} strokeWidth={1.5} fill="currentColor" className="opacity-20 relative z-10" />
+        <div className="mb-8 relative">
+          <div className="w-40 h-40 bg-lavender-200/30 rounded-full animate-scale-pulse blur-2xl absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+          <Sparkles className="w-12 h-12 text-warm-400 relative z-10 animate-spin-slow opacity-80" strokeWidth={1} />
         </div>
-        <h2 className="text-3xl font-serif text-warm-900 mb-4">{t(lang, 'reflection_title')}</h2>
-        <p className="text-warm-600 max-w-md mx-auto leading-relaxed">
-          {t(lang, 'reflection_subtitle')}
-        </p>
+        <h2 className="text-2xl font-serif text-warm-800 mb-2">Your future self is responding...</h2>
+        <p className="text-warm-500 animate-pulse-slow">Preparing a message just for you</p>
+      </div>
+    );
+  }
+
+  // Final response letter page
+  if (isSaved && responseLetter) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 md:p-8 animate-fade-in-up" dir={isRTL(lang) ? 'rtl' : 'ltr'}>
+        <div className="w-full max-w-2xl relative z-10">
+          <div className="bg-[#fcfbf9]/90 backdrop-blur-sm p-8 md:p-12 rounded-3xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border border-white/60 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-lavender-200/50 via-peach-200/50 to-lavender-200/50 opacity-60"></div>
+
+            {/* Soft light effect */}
+            <div className="absolute -top-20 -right-20 w-64 h-64 bg-lavender-100/20 rounded-full blur-[60px] pointer-events-none"></div>
+
+            <div className="mb-6 flex items-center justify-center gap-2 text-warm-400">
+              <Heart size={16} fill="currentColor" className="opacity-50" />
+              <span className="text-xs font-semibold tracking-[0.2em] uppercase">A Response From Your Future Self</span>
+            </div>
+
+            <div className="prose prose-lg prose-warm mx-auto font-serif text-warm-800 leading-loose relative z-10">
+              <p className="whitespace-pre-line">{responseLetter}</p>
+            </div>
+
+            <div className="mt-10 flex justify-center">
+              <div className="w-16 h-1 bg-warm-100 rounded-full opacity-50"></div>
+            </div>
+          </div>
+
+          <div className="mt-8 text-center">
+            <p className="text-warm-500 text-sm mb-6">{t(lang, 'reflection_subtitle')}</p>
+            <p className="text-warm-400 text-xs">See you next time ✨</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -496,7 +543,7 @@ const App: React.FC = () => {
         <Route path="/reflection" element={
           <ProtectedRoute>
             {prompt && letter && userProfile ? (
-              <ReflectionView prompt={prompt} letter={letter} onSave={saveReflection} lang={language} />
+              <ReflectionView prompt={prompt} letter={letter} userProfile={userProfile} onSave={saveReflection} lang={language} />
             ) : (
               <Navigate to="/" replace />
             )}

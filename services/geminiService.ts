@@ -32,9 +32,9 @@ const getLanguageInstruction = (lang: LanguageCode): string => {
 
 export const generateFutureSelfLetter = async (user: UserProfile): Promise<string> => {
   const model = "gemini-3-flash-preview";
-  
+
   const langInstruction = getLanguageInstruction(user.language);
-  
+
   const systemInstruction = `
     You are the "Future Self" of the user. 
     The user is currently creating a connection with you to find emotional grounding.
@@ -69,7 +69,7 @@ export const generateFutureSelfLetter = async (user: UserProfile): Promise<strin
       contents: "Write me a letter to help me trust myself today.",
       config: {
         systemInstruction: systemInstruction,
-        temperature: 0.7, 
+        temperature: 0.7,
       },
     });
 
@@ -107,5 +107,57 @@ export const generateDailyPrompt = async (user: UserProfile, previousReflection?
   } catch (error) {
     console.error("Error generating prompt:", error);
     return "What does your inner voice want to say?";
+  }
+};
+
+export const generateResponseLetter = async (
+  user: UserProfile,
+  userReflection: string,
+  originalPrompt: string
+): Promise<string> => {
+  const model = "gemini-3-flash-preview";
+  const langInstruction = getLanguageInstruction(user.language);
+
+  const systemInstruction = `
+    You are the user's "Future Self" responding to their reflection.
+    
+    User Profile:
+    - Name: "${user.name}"
+    - What they need (Emotional Focus): "${user.emotionalFocus}"
+    
+    The user was asked: "${originalPrompt}"
+    They responded: "${userReflection}"
+    
+    Language Requirement:
+    ${langInstruction}
+    
+    Your Task:
+    - Write a short, heartfelt motivational response (under 120 words).
+    - Acknowledge what they shared.
+    - Provide encouragement and validation.
+    - Remind them of their strength and capability.
+    - End with a warm, empowering closing thought.
+    
+    Tone:
+    - Compassionate, warm, and uplifting.
+    - Like a caring mentor or future version of themselves.
+    - NO toxic positivity. Be genuine and grounded.
+    - Personal and intimate, using "you" directly.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: "Generate a motivational response letter.",
+      config: {
+        systemInstruction: systemInstruction,
+        temperature: 0.7,
+      },
+    });
+
+    return response.text || "You showed up today. That takes courage. I'm proud of you.";
+  } catch (error) {
+    console.error("Error generating response letter:", error);
+    return `Dear ${user.name},\n\nThank you for showing up today. What you shared matters, and the fact that you're reflecting shows incredible strength.\n\nKeep going. I believe in you.`;
   }
 };
