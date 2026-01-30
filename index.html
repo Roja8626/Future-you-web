@@ -1,129 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Future You</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              serif: ['Lora', 'serif'],
-            },
-            colors: {
-              lavender: {
-                50: '#fdfbfd',
-                100: '#f7f4f8',
-                200: '#ece5ef',
-                300: '#dcd0e3',
-                400: '#c5b1d3',
-                500: '#ad92c1',
-              },
-              misty: {
-                50: '#f2fbfb',
-                100: '#e0f6f6',
-                200: '#c3eced',
-                300: '#96dee0',
-                400: '#62c6ca',
-              },
-              peach: {
-                50: '#fff9f5',
-                100: '#fff0e6',
-                200: '#ffe0cc',
-                300: '#ffc8a8',
-                400: '#ffa67c',
-              },
-              warm: {
-                50: '#fafaf9',   /* stone-50 */
-                100: '#f5f5f4',  /* stone-100 */
-                200: '#e7e5e4',  /* stone-200 */
-                800: '#292524',  /* stone-800 */
-                900: '#1c1917',  /* stone-900 */
-              },
-              amber: {
-                50: '#fffbeb',
-                100: '#fef3c7',
-              }
-            },
-            animation: {
-              'fade-in': 'fadeIn 1.5s ease-out forwards',
-              'fade-in-up': 'fadeInUp 1.2s ease-out forwards',
-              'float': 'float 12s ease-in-out infinite',
-              'float-delayed': 'float 12s ease-in-out 6s infinite',
-              'pulse-slow': 'pulseSoft 8s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-              'scale-pulse': 'scalePulse 4s ease-in-out infinite',
-              'ripple': 'ripple 0.6s linear forwards',
-            },
-            keyframes: {
-              fadeIn: {
-                '0%': { opacity: '0' },
-                '100%': { opacity: '1' },
-              },
-              fadeInUp: {
-                '0%': { opacity: '0', transform: 'translateY(20px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' },
-              },
-              float: {
-                '0%, 100%': { transform: 'translateY(0)' },
-                '50%': { transform: 'translateY(-20px)' },
-              },
-              pulseSoft: {
-                '0%, 100%': { opacity: '1' },
-                '50%': { opacity: '0.8' },
-              },
-              scalePulse: {
-                '0%, 100%': { transform: 'scale(1)' },
-                '50%': { transform: 'scale(1.05)' },
-              },
-              ripple: {
-                '0%': { transform: 'scale(0)', opacity: '0.5' },
-                '100%': { transform: 'scale(4)', opacity: '0' },
-              }
-            }
-          }
-        }
-      }
-    </script>
-    <style>
-      body {
-        background-color: #fafaf9;
-        color: #44403c;
-      }
-      /* Smooth gradient transitions */
-      .bg-transition {
-        transition: background-image 3s ease-in-out, background-color 3s ease-in-out;
-      }
-      /* Custom scrollbar for a cleaner look */
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background-color: #e7e5e4;
-        border-radius: 20px;
-      }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
-    "react": "https://esm.sh/react@^19.2.4",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Future You</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/index.css">
 </head>
-  <body>
-    <div id="root"></div>
+
+<body>
+  <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>
